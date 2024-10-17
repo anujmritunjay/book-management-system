@@ -1,28 +1,26 @@
 package main
 
 import (
+	"encoding/json"
+	"log"
+	"net/http"
+
 	"github.com/anujmritunjay/book-management-system/config"
-	"gorm.io/gorm"
+	"github.com/anujmritunjay/book-management-system/routes"
+	"github.com/gorilla/mux"
 )
 
-type User struct {
-	gorm.Model
-	Name  string
-	Email string
+func main() {
+	config.ConnectDatabase()
+	r := mux.NewRouter()
+	routes.RegisterRoutes(r)
+	r.HandleFunc("/", rootRoute).Methods("GET")
+	log.Fatal(http.ListenAndServe(":8002", r))
 }
 
-func main() {
-	// Initialize database connection
-	config.ConnectDatabase()
+func rootRoute(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	res := map[string]interface{}{"success": true, "message": "Hello from the Go Server."}
+	json.NewEncoder(w).Encode(res)
 
-	// Auto Migrate the schema
-	config.DB.AutoMigrate(&User{})
-
-	// Perform CRUD operations...
-	config.DB.Create(&User{Name: "John Doe", Email: "john.doe@example.com"})
-
-	// Example of reading data
-	var user User
-	config.DB.First(&user, 1)                      // Find user with integer primary key
-	config.DB.First(&user, "name = ?", "John Doe") // Find user with name
 }
